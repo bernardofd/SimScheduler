@@ -1,6 +1,4 @@
-import java.util.Scanner;
-import java.util.LinkedList;
-import java.util.Random;
+import java.util.*;
 
 public class OS {
 	public static void main(String[] args) {
@@ -18,6 +16,7 @@ public class OS {
 		// System Queues
 		LinkedList<Process> readyQueue = new LinkedList<Process>();
 		LinkedList<Process> waitingQueue = new LinkedList<Process>();
+		LinkedList<Process> finishedProcesses = new LinkedList<Process>();
 
 		System.out.println("Creating Processes...");
 		for (int i=0; i<numProcesses; i++) {
@@ -29,10 +28,11 @@ public class OS {
 		System.out.println("Creating CPU");
 		CPU cpu = new CPU(); // The System's CPU
 		Scheduler scheduler = new Scheduler();
-		
+		Process p,q;
+		Iterator<Process> it;
 		// Main loop - exits when all processes are done
 		while (readyQueue.size() > 0 || waitingQueue.size() > 0) {
-			Process p = scheduler.nextProcess(readyQueue);
+			p = scheduler.nextProcess(readyQueue);
 			if (p == null) {
 				System.out.println("KERNEL PANIC!");
 				return;
@@ -41,15 +41,20 @@ public class OS {
 			cpu.load(p);
 			int burst = cpu.executeBurst();
 			p = cpu.unload();
-			// Add waiting time for all ready processes except the one that just executed
-			for(Iterator<Process> itReady = readyQueue.listIterator(); itReady.hasNext()
-			while () {
-				itReady
+			
+			//Add waiting time for all active processes except the one that just executed
+			it = readyQueue.listIterator();
+			while (it.hasNext()) {
+				q = it.next();
+				q.addWaitingTime(burst);
 			}
-			if (p.getStatus() == 1) { // Process is waiting for I/O
-				waitingQueue.add(p);
+			it = waitingQueue.listIterator();
+			while (it.hasNext()) {
+				q = it.next();
+				q.addWaitingTime(burst);
 			}
-			// There's a 75% chance of a process waiting for I/O be serviced
+			
+			// There's a 75% chance of a process waiting for I/O to be serviced
 			if (waitingQueue.size() > 0 && gen.nextDouble() < 0.75) {
 				p = waitingQueue.removeFirst();
 				p.setStatus(0);
@@ -66,9 +71,39 @@ public class OS {
 				cpu.addIdleCycles(idleTime);
 				System.out.printf("Ready Queue is empty, waiting %d cycles for next process\n", idleTime);
 				System.out.printf("PID(%d) is ready.\n", p.getPID());
+				//Add waiting time for all active processes
+				it = readyQueue.listIterator();
+				while (it.hasNext()) {
+					q = it.next();
+					q.addWaitingTime(burst);
+				}
+				it = waitingQueue.listIterator();
+				while (it.hasNext()) {
+					q = it.next();
+					q.addWaitingTime(burst);
+				}
+			}
+
+			// Process screening
+			if (p.getStatus() == 1) { // Process is waiting for I/O
+				waitingQueue.add(p);
+			} else if (p.getStatus() == 2) { //Process finished!
+				finishedProcesses.add(p);
+			} else { // Process Preempted, back to the readyQueue
+				readyQueue.add(p);
 			}
 		}
 		System.out.println("Execution Ended!");
-		// Statistics;
+		// Statistics
+		System.out.printf("Average CPU Utilization: %.2f\n", cpu.getAvgUtilization()*100);
+		// Compute average Waiting time
+		double avgWaitingTime = 0.0;
+		it = finishedProcesses.listIterator();
+		while (it.hasNext()) {
+			q = it.next();
+			avgWaitingTime += q.getWaitingTime();
+		}
+		avgWaitingTime /= numProcesses;
+		System.out.printf("Average Process Waiting Cycles: %.2f\n", avgWaitingTime);
 	}
 }

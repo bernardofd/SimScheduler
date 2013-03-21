@@ -18,6 +18,7 @@ public class Process {
 	// Statistics
 	private int waitingTime;
 	private int turnaround;
+	private double avgResponseTime;
 
 	// Constructor
 	public Process(int pid, Random gen) {
