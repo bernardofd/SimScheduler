@@ -34,9 +34,9 @@ public class Process {
 		}
 		for (int i=0; i<this.numBursts; i++) {
 			if(isCPUBound) {
-				cpuBursts[i] = gen.nextInt(100);
+				cpuBursts[i] = 20 + gen.nextInt(100);
 			} else {
-				cpuBursts[i] = gen.nextInt(10);
+				cpuBursts[i] = 2 + gen.nextInt(10);
 			}
 			this.maxPC += cpuBursts[i];
 		}
