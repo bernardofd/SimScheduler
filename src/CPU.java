@@ -67,6 +67,6 @@ public class CPU {
 	}
 
 	public double getAvgUtilization() {
-		return this.idleTime/this.cycles;
+		return (double) this.cycles/(this.idleTime+this.cycles);
 	}
 }

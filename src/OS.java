@@ -63,13 +63,6 @@ public class OS {
 				readyQueue.add(p);
 			}
 			
-			// There's a 75% chance of a process waiting for I/O to be serviced
-			if (waitingQueue.size() > 0 && gen.nextDouble() < 0.75) {
-				q = waitingQueue.removeFirst();
-				q.setStatus(0);
-				readyQueue.add(q);
-				System.out.printf("PID(%d) is ready.\n", q.getPID());
-			}
 			// If the readyQueue is empty and there's any processes waiting for I/O, the CPU will wait for the next one
 			if (readyQueue.size() == 0 && waitingQueue.size() > 0) {
 				q = waitingQueue.removeFirst();
@@ -84,18 +77,24 @@ public class OS {
 				it = readyQueue.listIterator();
 				while (it.hasNext()) {
 					q = it.next();
-					q.addWaitingTime(burst);
+					q.addWaitingTime(idleTime);
 				}
 				it = waitingQueue.listIterator();
 				while (it.hasNext()) {
 					q = it.next();
-					q.addWaitingTime(burst);
+					q.addWaitingTime(idleTime);
 				}
+			} else if (waitingQueue.size() > 0 && gen.nextDouble() < 0.75) {
+				// There's a 75% chance of a process waiting for I/O to be serviced
+				q = waitingQueue.removeFirst();
+				q.setStatus(0);
+				readyQueue.add(q);
+				System.out.printf("PID(%d) is ready.\n", q.getPID());
 			}
 		}
 		System.out.println("Execution Ended!");
 		// Statistics
-		System.out.printf("Average CPU Utilization: %.2f\n", cpu.getAvgUtilization()*100);
+		System.out.printf("Average CPU Utilization: %.2f%%\n", cpu.getAvgUtilization()*100);
 		// Compute average Waiting time
 		double avgWaitingTime = 0.0;
 		it = finishedProcesses.listIterator();
@@ -104,6 +103,6 @@ public class OS {
 			avgWaitingTime += q.getWaitingTime();
 		}
 		avgWaitingTime /= numProcesses;
-		System.out.printf("Average Process Waiting Cycles: %.2f\n", avgWaitingTime);
+		System.out.printf("Average Process Waiting Time: %.2f cycles\n", avgWaitingTime);
 	}
 }
