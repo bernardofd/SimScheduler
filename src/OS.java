@@ -42,16 +42,18 @@ public class OS {
 			int burst = cpu.executeBurst();
 			p = cpu.unload();
 			
-			//Add waiting time for all active processes except the one that just executed
+			//Add waiting time for all ready processes
 			it = readyQueue.listIterator();
 			while (it.hasNext()) {
 				q = it.next();
 				q.addWaitingTime(burst);
 			}
+
+			//Add turnaround time for the remaining active processes
 			it = waitingQueue.listIterator();
 			while (it.hasNext()) {
 				q = it.next();
-				q.addWaitingTime(burst);
+				q.addTotalTime(burst);
 			}
 
 			// Process screening
@@ -60,6 +62,7 @@ public class OS {
 			} else if (p.getStatus() == 2) { //Process finished!
 				finishedProcesses.add(p);
 			} else { // Process Preempted, back to the readyQueue
+				System.out.printf("Process PID<%d> preempted.\n", p.getPID());
 				readyQueue.add(p);
 			}
 			
@@ -73,7 +76,7 @@ public class OS {
 				cpu.addIdleCycles(idleTime);
 				System.out.printf("Ready Queue is empty, waiting %d cycles for next process\n", idleTime);
 				System.out.printf("PID(%d) is ready.\n", q.getPID());
-				//Add waiting time for all active processes
+				//Add waiting/total time for all active processes
 				it = readyQueue.listIterator();
 				while (it.hasNext()) {
 					q = it.next();
@@ -82,7 +85,7 @@ public class OS {
 				it = waitingQueue.listIterator();
 				while (it.hasNext()) {
 					q = it.next();
-					q.addWaitingTime(idleTime);
+					q.addTotalTime(idleTime);
 				}
 			} else if (waitingQueue.size() > 0 && gen.nextDouble() < 0.75) {
 				// There's a 75% chance of a process waiting for I/O to be serviced
@@ -93,16 +96,23 @@ public class OS {
 			}
 		}
 		System.out.println("Execution Ended!");
+
 		// Statistics
 		System.out.printf("Average CPU Utilization: %.2f%%\n", cpu.getAvgUtilization()*100);
-		// Compute average Waiting time
-		double avgWaitingTime = 0.0;
+		// Compute average Waiting time, Response time and Turnaround
+		double avgWaitingTime = 0.0, avgResponseTime = 0.0, avgTurnaround = 0.0;
 		it = finishedProcesses.listIterator();
 		while (it.hasNext()) {
 			q = it.next();
 			avgWaitingTime += q.getWaitingTime();
+			avgResponseTime += q.getAvgResponseTime();
+			avgTurnaround += q.getTurnaround();
 		}
 		avgWaitingTime /= numProcesses;
+		avgResponseTime /= numProcesses;
+		avgTurnaround /= numProcesses;
 		System.out.printf("Average Process Waiting Time: %.2f cycles\n", avgWaitingTime);
+		System.out.printf("Average Process Response Time: %.2f cycles\n", avgResponseTime);
+		System.out.printf("Average Process Turnaround: %.2f cycles\n", avgTurnaround);
 	}
 }

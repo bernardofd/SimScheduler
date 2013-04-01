@@ -92,17 +92,19 @@ public class Process {
 	*/
 	public void executeBurst(int cycles) { //preemptive
 		if (this.status == 0) {
-			this.pc += cycles;
 			this.burstPC += cycles;
-			this.turnaround += cycles;
 			if (this.burstPC >= this.cpuBursts[currentBurst]) { //Burst Ended
+				int diff = this.cpuBursts[currentBurst] - (this.burstPC - cycles);
 				this.currentBurst++;
 				this.burstPC = 0;
+				this.turnaround += diff;
 				if (this.currentBurst >= this.cpuBursts.length) {
 					this.status = 2; //Finished
 				} else {
 					this.status = 1; //Waiting
 				}
+			} else {
+				this.pc += cycles;
 			}
 		}
 	}
@@ -116,6 +118,10 @@ public class Process {
 		}
 	}
 
+	public void addTotalTime(int cycles) {
+		this.turnaround += cycles;
+	}
+
 	public double getAvgResponseTime() {
 		if (this.status == 2) {
 			return this.turnaround/this.numBursts;
@@ -125,8 +131,9 @@ public class Process {
 	}
 
 	public void addWaitingTime(int cycles) {
-		if (this.status != 2) {
+		if (this.status == 0) {
 			this.waitingTime += cycles;
+			this.turnaround += cycles;
 		}
 	}
 
