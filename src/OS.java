@@ -68,25 +68,21 @@ public class OS {
 			
 			// If the readyQueue is empty and there's any processes waiting for I/O, the CPU will wait for the next one
 			if (readyQueue.size() == 0 && waitingQueue.size() > 0) {
-				q = waitingQueue.removeFirst();
-				q.setStatus(0);
-				readyQueue.add(q);
 				// Add a random idle time (between 50 and 100 cycles) in the CPU
 				int idleTime = 50 + gen.nextInt(50);
 				cpu.addIdleCycles(idleTime);
 				System.out.printf("Ready Queue is empty, waiting %d cycles for next process\n", idleTime);
-				System.out.printf("PID(%d) is ready.\n", q.getPID());
-				//Add waiting/total time for all active processes
-				it = readyQueue.listIterator();
-				while (it.hasNext()) {
-					q = it.next();
-					q.addWaitingTime(idleTime);
-				}
+				//Add total time for all active processes
 				it = waitingQueue.listIterator();
 				while (it.hasNext()) {
 					q = it.next();
 					q.addTotalTime(idleTime);
 				}
+				// Ready the process
+				q = waitingQueue.removeFirst();
+				q.setStatus(0);
+				readyQueue.add(q);
+				System.out.printf("PID(%d) is ready.\n", q.getPID());
 			} else if (waitingQueue.size() > 0 && gen.nextDouble() < 0.75) {
 				// There's a 75% chance of a process waiting for I/O to be serviced
 				q = waitingQueue.removeFirst();

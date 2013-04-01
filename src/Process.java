@@ -18,7 +18,7 @@ public class Process {
 	// Statistics
 	private int waitingTime;
 	private int turnaround;
-	private double avgResponseTime;
+	private int responseTime;
 
 	// Constructor
 	public Process(int pid, Random gen) {
@@ -46,7 +46,7 @@ public class Process {
 		System.out.printf("Process %d created and it is %s.\n", pid, isCPUBound?"CPU-Bound":"I/O-Bound");
 		// Statistics
 		this.waitingTime = 0;
-		this.avgResponseTime = 0;
+		this.responseTime = 0;
 		this.turnaround = 0;
 	}
 
@@ -78,6 +78,7 @@ public class Process {
 	public void executeBurst() { //non-preemptive
 		if (this.status == 0) {
 			this.pc += this.cpuBursts[this.currentBurst];
+			this.responseTime += this.cpuBursts[this.currentBurst];
 			this.turnaround += this.cpuBursts[this.currentBurst++];
 			if (this.currentBurst >= this.cpuBursts.length) {
 				this.status = 2; //Finished
@@ -98,6 +99,7 @@ public class Process {
 				this.currentBurst++;
 				this.burstPC = 0;
 				this.turnaround += diff;
+				this.responseTime += diff;
 				if (this.currentBurst >= this.cpuBursts.length) {
 					this.status = 2; //Finished
 				} else {
@@ -105,6 +107,8 @@ public class Process {
 				}
 			} else {
 				this.pc += cycles;
+				this.turnaround += cycles;
+				this.responseTime += cycles;
 			}
 		}
 	}
@@ -124,7 +128,7 @@ public class Process {
 
 	public double getAvgResponseTime() {
 		if (this.status == 2) {
-			return this.turnaround/this.numBursts;
+			return this.responseTime/this.numBursts;
 		} else {
 			return -1;
 		}
@@ -134,6 +138,7 @@ public class Process {
 		if (this.status == 0) {
 			this.waitingTime += cycles;
 			this.turnaround += cycles;
+			this.responseTime += cycles;
 		}
 	}
 
